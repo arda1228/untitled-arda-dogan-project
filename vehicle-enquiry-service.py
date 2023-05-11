@@ -4,8 +4,8 @@ import requests
 
 load_dotenv()
 
-key = os.getenv('VES_KEY')
-url = "https://driver-vehicle-licensing.api.gov.uk/vehicle-enquiry/v1/vehicles"
+key = os.getenv('VES_KEY_TEST')
+url = "https://uat.driver-vehicle-licensing.api.gov.uk/vehicle-enquiry/v1/vehicles"
 
 # real url below
 # https://driver-vehicle-licensing.api.gov.uk/vehicle-enquiry/v1/vehicles
