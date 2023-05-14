@@ -4,14 +4,17 @@ import requests
 
 load_dotenv()
 
-key = os.getenv('VES_KEY_UAT')
+uat_key = os.getenv('VES_KEY_UAT')
+
+prod_key = os.getenv('VES_KEY_PROD')
+
 prod_url = "https://driver-vehicle-licensing.api.gov.uk/vehicle-enquiry/v1/vehicles"
 
 uat_url = "https://uat.driver-vehicle-licensing.api.gov.uk/vehicle-enquiry/v1/vehicles"
 
 payload = "{\n\t\"registrationNumber\": \"AA19AAA\"\n}"
 headers = {
-  'x-api-key': key,
+  'x-api-key': uat_key,
   'Content-Type': 'application/json'
 }
 
