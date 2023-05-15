@@ -1,11 +1,14 @@
 import requests
 import pandas as pd
 
-df = pd.read_csv('vehicles.csv', low_memory=False)
+def csv_parse(csv):
+    df = pd.read_csv(csv, low_memory=False)
 
-final_table_columns = ['make', 'model', 'year', 'city08', 'highway08']
+    final_table_columns = ['make', 'model', 'year', 'city08', 'highway08']
 
-df = df[df.columns.intersection(final_table_columns)]
+    df = df[df.columns.intersection(final_table_columns)]
+
+    return df
 
 
 def carMpg(make, model, year):
@@ -16,11 +19,10 @@ def carMpg(make, model, year):
     # Define the column to return
     return_columns = {'city08', 'highway08'}
 
+    df = csv_parse("vehicles.csv")
+
     # Use loc to search for rows based on column values and return the specified column
     result_df = df.loc[(df['make'] == search_values['make']) & (df['model'] == search_values['model']) & (df['year'] == search_values['year']), return_columns]
-
-    # Print the result
-    print(result_df)
 
     total_city_mpg = result_df['city08'].sum()
     total_highway_mpg = result_df['highway08'].sum()
