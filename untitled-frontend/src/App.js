@@ -2,26 +2,26 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 function App() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [carReg, setCarReg] = useState('');
+  const [startingPoint, setStartingPoint] = useState('');
+  const [destination, setDestination] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('API URL', {
-        name,
-        email,
-        message,
+      const response = await axios.post('API URL HERE', {
+        carReg,
+        startingPoint,
+        destination,
       });
 
       console.log(response.data); // Optional: Display the response data
 
       // Reset the form
-      setName('');
-      setEmail('');
-      setMessage('');
+      setCarReg('');
+      setStartingPoint('');
+      setDestination('');
     } catch (error) {
       console.error(error);
     }
@@ -29,33 +29,34 @@ function App() {
 
   return (
     <div>
-      <h1>Post Request Form</h1>
+      <h1>Untitled React App</h1>
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="name">Name:</label>
+          <label htmlFor="carReg">Car Registration:</label>
           <input
             type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            id="carReg"
+            value={carReg}
+            onChange={(e) => setCarReg(e.target.value)}
           />
         </div>
         <div>
-          <label htmlFor="email">Email:</label>
+          <label htmlFor="startingPoint">Starting Point:</label>
           <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            id="startingPoint"
+            value={startingPoint}
+            onChange={(e) => setStartingPoint(e.target.value)}
           />
         </div>
         <div>
-          <label htmlFor="message">Message:</label>
-          <textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          ></textarea>
+          <label htmlFor="destination">Destination:</label>
+          <input
+            type="text"
+            id="destination"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+          />
         </div>
         <button type="submit">Submit</button>
       </form>
@@ -64,3 +65,4 @@ function App() {
 }
 
 export default App;
+
