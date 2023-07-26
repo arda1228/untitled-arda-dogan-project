@@ -29,12 +29,4 @@ class CdkApiStackStack(Stack):
         api = apigw.LambdaRestApi(
             self, 'Endpoint',
             handler=hello_with_counter._handler,
-            # default_cors_preflight_options={
-            #     "allow_origins": apigw.Cors.ALL_ORIGINS,
-            #     "allow_methods": apigw.Cors.ALL_METHODS
-            # }
         )
-
-        #  # Add a resource with a POST method to the API
-        # resource = api.root.add_resource("initial")
-        # resource.add_method("POST", apigw.LambdaIntegration(my_lambda))
