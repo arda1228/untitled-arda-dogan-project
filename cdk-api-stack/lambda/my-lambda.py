@@ -12,7 +12,10 @@ def handler(event, context):
     return {
         'statusCode': 200,
         'headers': {
-            'Content-Type': 'text/plain'
+            'Content-Type': 'text/plain',
+            # "Access-Control-Allow-Origin": "FRONTEND URL",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
         },
         'body': message
     }
