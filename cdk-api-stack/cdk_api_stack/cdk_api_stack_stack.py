@@ -4,6 +4,10 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_apigateway as apigw,
 )
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # from cdk_dynamo_table_view import TableViewer
 from .hitcounter import HitCounter
@@ -19,6 +23,9 @@ class CdkApiStackStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_10,
             code=_lambda.Code.from_asset('lambda'),
             handler='my-lambda.handler',
+            environment={
+                'FRONTEND_URL': os.getenv('FRONTEND_URL')
+            }
         )
 
         hello_with_counter = HitCounter(
