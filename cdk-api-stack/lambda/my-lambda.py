@@ -8,7 +8,7 @@ def handler(event, context):
     startingPoint = json.loads(event['body'])['startingPoint']
     destination = json.loads(event['body'])['destination']
 
-    message = f'my car\'s registration is {carReg}, and i want to know how much money and emissions i\'d save if i used public transport to get from {startingPoint} to {destination} instead of driving!'
+    message = f'hello! my car\'s registration is {carReg}, and i want to know how much money and emissions i\'d save if i used public transport to get from {startingPoint} to {destination} instead of driving!'
     
     # Get the URL of the resource making the request
     origin_url = event.get('headers', {}).get('origin', '')
