@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./cdk-api-stack/cdk_api_stack/co2"
+    ]
+}

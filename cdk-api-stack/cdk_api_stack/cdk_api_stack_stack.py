@@ -17,6 +17,13 @@ class CdkApiStackStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        #  Define a Lambda Layer that includes your custom module
+        co2_layer = _lambda.LayerVersion(
+            self, "MyCustomLayer",
+            code=_lambda.Code.from_asset(path="cdk_api_stack/co2"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_10]  # Adjust the runtime as needed
+        )
+
         # Defines an AWS Lambda resource
         my_lambda = _lambda.Function(
             self, 'LambdaHandler',
@@ -24,8 +31,10 @@ class CdkApiStackStack(Stack):
             code=_lambda.Code.from_asset('lambda'),
             handler='my-lambda.handler',
             environment={
-                'FRONTEND_URL': os.getenv('FRONTEND_URL')
-            }
+                'FRONTEND_URL': os.getenv('FRONTEND_URL'),
+                'CO2_ST_URL': os.getenv('CO2_ST_URL') 
+            },
+            layers=[co2_layer]  # Add the custom layer to the Lambda function
         )
 
         hello_with_counter = HitCounter(
