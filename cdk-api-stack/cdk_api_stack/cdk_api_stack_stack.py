@@ -1,3 +1,6 @@
+# this file defines the cdk stack
+# a layer, a lambda function, an api gateway and an api gateway handler
+
 from constructs import Construct
 from aws_cdk import (
     Stack,
@@ -17,14 +20,14 @@ class CdkApiStackStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        #  Define a Lambda Layer that includes your custom module
+        #  defining a Lambda Layer that includes your custom module
         co2_layer = _lambda.LayerVersion(
             self, "MyCustomLayer",
             code=_lambda.Code.from_asset(path="cdk_api_stack/co2"),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_10]  # Adjust the runtime as needed
         )
 
-        # Defines an AWS Lambda resource
+        # defining an AWS Lambda resource
         my_lambda = _lambda.Function(
             self, 'LambdaHandler',
             runtime=_lambda.Runtime.PYTHON_3_10,
@@ -38,11 +41,13 @@ class CdkApiStackStack(Stack):
             layers=[co2_layer]  # Add the custom layer to the Lambda function
         )
 
+        # defining a handler for the api gateway, which uses the lambda as a downstream
         hello_with_counter = HitCounter(
             self, 'HitCounter',
             downstream=my_lambda,
         )
 
+        # defining an api gateway to be hit
         api = apigw.LambdaRestApi(
             self, 'Endpoint',
             handler=hello_with_counter._handler,

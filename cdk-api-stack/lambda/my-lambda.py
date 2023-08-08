@@ -1,3 +1,6 @@
+# this file defines the lambda function, which currently gives a boiler plate message
+# the plan is to have layers working so that it can make a post request and return some data
+
 import json
 import os
 # import co2

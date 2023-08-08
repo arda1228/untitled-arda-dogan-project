@@ -1,3 +1,6 @@
+# this file defines a handler for the api gateway (other than the downstream lambda)
+# it increments a dynamo db table with the path that has just been hit
+
 import json
 import os
 
