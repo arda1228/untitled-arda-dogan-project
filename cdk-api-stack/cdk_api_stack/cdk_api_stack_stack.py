@@ -23,7 +23,7 @@ class CdkApiStackStack(Stack):
         #  defining a Lambda Layer that includes your custom module
         co2_layer = _lambda.LayerVersion(
             self, "MyCustomLayer",
-            code=_lambda.Code.from_asset(path="cdk_api_stack/co2"),
+            code=_lambda.Code.from_asset(path="lambda/co2"),
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_10]  # Adjust the runtime as needed
         )
 
