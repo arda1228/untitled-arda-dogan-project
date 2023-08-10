@@ -36,7 +36,8 @@ class CdkApiStackStack(Stack):
             environment={
                 'FRONTEND_URL': os.getenv('FRONTEND_URL'),
                 'CO2_ST_URL': os.getenv('CO2_ST_URL'),
-                'CO2_ST_API_KEY': os.getenv('CO2_ST_API_KEY') 
+                'CO2_ST_API_KEY': os.getenv('CO2_ST_API_KEY'),
+                'CO2_T_URL': os.getenv('CO2_T_URL')
             },
             layers=[co2_layer]  # Add the custom layer to the Lambda function
         )

@@ -14,3 +14,5 @@ def diff(starting_location, destination):
     result = co2_driving.driving_emissions(starting_location, destination) - co2_pt.pt_emissions(starting_location, destination)
     
     return f'by using public transport instead of driving, you\'d save {result} kgs of carbon!'
+
+print(diff("twyford", "wargrave"))
