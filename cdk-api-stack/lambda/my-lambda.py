@@ -12,26 +12,9 @@ def handler(event, context):
     fuelType = json.loads(event['body'])['fuelType']
     startingPoint = json.loads(event['body'])['startingPoint']
     destination = json.loads(event['body'])['destination']
-    
-    # Get the URL of the resource making the request
-    origin_url = event.get('headers', {}).get('origin', '')
-
 
     co2_t_url = os.environ['CO2_T_URL']
-    # co2_st_url = os.environ['CO2_ST_URL']
     co2_st_api_key = os.environ['CO2_ST_API_KEY']
-
-
-    # finding driving emissions
-    # driving_data = {
-    #     "from": startingPoint,
-    #     "to": destination,
-    #     "transport_types": [
-    #         "driving"
-    #     ]
-    # }
-
-    
 
     data = {
     "trips": [
@@ -97,17 +80,17 @@ def handler(event, context):
             result = response.json()
             co2e_values = [trip["co2e"] for trip in result["trips"]]
             difference = co2e_values[0] - co2e_values[1]
-            msg = f'by using public transport instead of driving, you saved {difference} kgs of co2!'
+            msg = f'by using public transport instead of driving, you saved {difference} kgs of co2 on your {total_distance}km trip!'
+
             return {
                     'statusCode': 200,
                     'headers': {
                         'Content-Type': 'text/plain',
-                        # "Access-Control-Allow-Origin": os.environ['FRONTEND_URL'],
-                        "Access-Control-Allow-Origin": '*',
+                        "Access-Control-Allow-Origin": os.environ['FRONTEND_URL'],
                         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
                         "Access-Control-Allow-Headers": "Content-Type, Authorization"
                     },
-                    'body': f"{msg}\n\nRequest came from:{origin_url}\n\n"
+                    'body': f"{msg}"
                 }
         else:
             print(f"POST request failed with status code: {response.status_code}")
