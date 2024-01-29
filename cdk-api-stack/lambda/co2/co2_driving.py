@@ -26,7 +26,11 @@ def driving_emissions(starting_location, destination):
 
         if response.status_code == 200:
             result = response.json()
-            return result['trips'][0]['co2e']
+            # return result['trips'][0]['co2e']
+            distance = result['trips'][0]['steps'][0]['transport']['distance']
+    
+            return distance
+
         else:
             print(f"POST request failed with status code: {response.status_code}")
             return None
@@ -35,4 +39,4 @@ def driving_emissions(starting_location, destination):
         print(f"An error occurred during the POST request: {e}")
         return None
 
-# print(co2driving(starting_location="rg10 9ny", destination="co5 8gz"))
+print(driving_emissions(starting_location="rg10 9ny", destination="co5 8gz"))
