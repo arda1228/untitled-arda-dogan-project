@@ -5,42 +5,6 @@ import json
 import os
 import requests
 
-def calculate_journey_cost(distance, fuel_efficiency, fuel_price_per_liter):
-    fuel_needed = distance / fuel_efficiency
-    journey_cost = fuel_needed * fuel_price_per_liter
-    return journey_cost
-
-def driving_price(distance_km, car_type, fuel_type):
-
-    # Set fuel efficiency based on car type and fuel type
-    fuel_efficiencies = {
-        'small': {'gasoline': 36, 'diesel': 43, 'electric': 132},
-        'medium': {'gasoline': 36, 'diesel': 43, 'electric': 132},
-        'large': {'gasoline': 36, 'diesel': 43, 'electric': 132}
-    }
-
-    # prices are per litre or per kWh
-    fuel_prices = {
-        'gasoline': 1.24,
-        'diesel': 1.3,
-        'electric': 0.163
-    }
-
-    # based on average yearly insurance prices estimates in the uk (divided by 365)
-    insurances = {
-        'small': {'gasoline': 2.05, 'diesel': 2.60, 'electric': 2.20},
-        'medium': {'gasoline': 0.56, 'diesel': 2.74, 'electric': 0.60},
-        'large': {'gasoline': 2.88, 'diesel': 1.28, 'electric': 3.10}
-    }
-
-    if car_type in fuel_efficiencies and fuel_type in fuel_efficiencies[car_type]:
-        fuel_efficiency = fuel_efficiencies[car_type][fuel_type]
-    else:
-        return "Invalid car type or fuel type. Using provided fuel efficiency."
-
-    journey_cost = calculate_journey_cost(distance_km, fuel_efficiency, fuel_prices[fuel_type]) + insurances[car_type][fuel_type]
-    return journey_cost
-
 def handler(event, context):
     print('request: {}'.format(json.dumps(event)))
 
