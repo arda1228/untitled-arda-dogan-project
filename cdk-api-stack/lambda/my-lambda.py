@@ -113,7 +113,7 @@ def handler(event, context):
             driving_price = fuel_needed * fuel_prices[fuelType]
             driving_price += insurances[carSize][fuelType]
 
-            msg = f'by using public transport instead of driving, you saved {difference} kgs of co2 on your {driving_distance}km trip!. driving would have cost you £{round(driving_price,2)}!'
+            msg = f'by using public transport instead of driving, you saved {difference} kgs of co2 on your {driving_distance}km trip! driving would have cost you £{round(driving_price,2)}!'
             
 
             return {
