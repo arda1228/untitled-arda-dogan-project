@@ -1,6 +1,7 @@
 # this file defines the lambda function, which currently gives a boiler plate message
 # the plan is to have layers working so that it can make a post request and return some data
 
+from geopy.distance import geodesic
 import json
 import os
 import requests
@@ -13,6 +14,60 @@ def handler(event, context):
     startingPoint = json.loads(event['body'])['startingPoint']
     destination = json.loads(event['body'])['destination']
 
+    # start fuel prices
+    try:
+        response = requests.get(
+            f"https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine={startingPoint}&f=json&maxLocations=1",
+            verify=False  # Disable SSL certificate verification for this request
+        )
+        if response.status_code == 200:
+            location_data = response.json()
+            if 'candidates' in data and data['candidates']:
+                location = location_data['candidates'][0]['location']
+                latitude, longitude = location['y'], location['x']
+        print(f"Could not find coordinates for postcode {startingPoint}")
+    except Exception as e:
+        print(f"Error fetching coordinates: {e}")
+
+    closest_station = None
+    try:
+        min_distance = float('inf')
+
+        for station in stations_data['stations']:
+            station_coordinates = (station['location']['latitude'], station['location']['longitude'])
+            distance = geodesic(coordinates, station_coordinates).kilometers
+            if distance < min_distance:
+                closest_station = station
+                min_distance = distance
+                
+    except Exception as e:
+        print(f"Error processing JSON data: {e}")
+
+    # latitude, longitude = y_coordinate, x_coordinate
+    if latitude is not None and longitude is not None:
+        coordinates = (latitude, longitude)
+        if closest_station:
+            prices = closest_station.get('prices', {})
+            e10_price = prices.get('E10')
+            e5_price = prices.get('E5')
+            b7_price = prices.get('B7')
+    try:
+        response = requests.get('https://api.sainsburys.co.uk/v1/exports/latest/fuel_prices_data.json', verify=False)
+        if response.status_code == 200:
+            stations_data = response.json()
+        else:
+            print(f"Failed to fetch stations data. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error fetching stations data: {e}")
+
+
+    fuel_prices = {
+        'gasoline': e5_price,
+        'diesel': b7_price,
+        'electric': 0.163
+    }
+    # end fuel prices
+    
     co2_t_url = os.environ['CO2_T_URL']
     co2_st_api_key = os.environ['CO2_ST_API_KEY']
 
@@ -90,12 +145,7 @@ def handler(event, context):
                 'large': {'gasoline': 36, 'diesel': 43, 'electric': 132}
             }
 
-            # prices are per litre or per kWh
-            fuel_prices = {
-                'gasoline': 1.24,
-                'diesel': 1.3,
-                'electric': 0.163
-            }
+            
 
             # based on average yearly insurance prices estimates in the uk (divided by 365)
             insurances = {
