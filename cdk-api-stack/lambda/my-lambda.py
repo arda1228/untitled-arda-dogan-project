@@ -68,6 +68,7 @@ def handler(event, context):
     }
     # end fuel prices
     
+    
     co2_t_url = os.environ['CO2_T_URL']
     co2_st_api_key = os.environ['CO2_ST_API_KEY']
 
