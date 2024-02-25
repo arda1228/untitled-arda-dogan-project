@@ -1,10 +1,6 @@
-# this file defines the lambda function, which currently gives a boiler plate message
-# the plan is to have layers working so that it can make a post request and return some data
-
 import json
 import os
 import requests
-# from geopy.distance import geodesic
 import numpy as np
 
 def calculate_journey_cost(distance, fuel_efficiency, fuel_price_per_liter):
@@ -173,10 +169,10 @@ def handler(event, context):
                     data = geocode_response_start.json()
                     if 'candidates' in data and data['candidates']:
                         location = data['candidates'][0]['location']
-                        lat1, lon1 = location['y'], location['x']
-                        msg += f"Coordinates for {startingPoint}: {lon1}, {lat1}"
+                        start_lat, start_lon = location['y'], location['x']
+                        msg += f"Coordinates for {startingPoint}: {start_lat}, {start_lon}"
                     else:
-                        lon1, lat1 = None
+                        start_lon, start_lat = None
                         msg += f"Could not find coordinates for postcode {startingPoint}"
                 else:
                     msg += f"Failed to fetch coordinates. Status code: {geocode_response_start.status_code}"
@@ -184,54 +180,31 @@ def handler(event, context):
                 msg += f"Error fetching coordinates: {e}"
             
             # geocode the destination postcode
-            try:
-                geocode_response_dest = requests.get(
-                    f"https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine={destination}&f=json&maxLocations=1",
-                    verify=False  # Disable SSL certificate verification for this request
-                )
-                if geocode_response_dest.status_code == 200:
-                    data = geocode_response_dest.json()
-                    if 'candidates' in data and data['candidates']:
-                        location = data['candidates'][0]['location']
-                        lat2, lon2 = location['y'], location['x']
-                        msg += f"Coordinates for {destination}: {lon2}, {lat2}"
-                    else:
-                        lon2, lat2 = None
-                        msg += f"Could not find coordinates for postcode {destination}"
+            closest_station = None
+            min_distance = 99999
+            count = 0
+            R = 6371.0  # earth radius in kilometers
+            for station in sainos_response.json().get('stations'):
+                print(f"Checking station: {station['address']}, {station['postcode']}")
+                lat2, lon2 = station['location']['latitude'], station['location']['longitude']
+                lon1, lat1, lon2, lat2 = map(np.radians, [start_lon, start_lat, lon2, lat2])
+                dlon = lon2 - lon1
+                dlat = lat2 - lat1
+                a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+                c = 2 * np.arcsin(np.sqrt(a))
+                distance = R * c
+                if distance < min_distance:
+                    closest_station = station
+                    min_distance = distance
+                    print(f"New closest station: {closest_station['address']}, {closest_station['postcode']}")
                 else:
-                    msg += f"Failed to fetch coordinates. Status code: {geocode_response_dest.status_code}"
-            except Exception as e:
-                msg += f"Error fetching coordinates: {e}"
+                    print(f"{station['address']}, {station['postcode']} is further away, current min_distance: {min_distance} km, distance: {distance} km")
+                count += 1
+                # 315 stations in the UK
 
-            # measure the distance to the nearest fuel station
-            # try:
-            #     closest_station = None
-            #     min_distance = float('inf')
 
-            #     for station in sainos_response['stations']:
-            #         station_coordinates = (station['location']['latitude'], station['location']['longitude'])
-            #         distance = geodesic(coordinates, station_coordinates).kilometers
-            #         if distance < min_distance:
-            #             closest_station = station
-            #             min_distance = distance
 
-            #     msg += f"closest station is {closest_station}"
-            # except Exception as e:
-            #     msg += f"Error processing JSON data: {e}"
-                
-
-            # using haversine formula to calculate distance between starting point and destination
-
-            # Twyford, Loughborough(-0.86766,51.47797,-1.24361,52.76437)
-            R = 6371.0  # Earth radius in kilometers
-            lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
-            dlon = lon2 - lon1
-            dlat = lat2 - lat1
-            a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-            c = 2 * np.arcsin(np.sqrt(a))
-            distance = R * c
-
-            msg += f"correct distance between {startingPoint} and {destination} is {distance} km"
+            msg += f"shortest distance between {startingPoint} and a sainsbury's petrol station is {min_distance} km to address: {closest_station['address']}, {closest_station['postcode']}! count: {count}"
 
             return {
                     'statusCode': 200,
