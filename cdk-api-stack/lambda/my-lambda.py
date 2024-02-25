@@ -3,42 +3,6 @@ import os
 import requests
 import numpy as np
 
-def calculate_journey_cost(distance, fuel_efficiency, fuel_price_per_liter):
-    fuel_needed = distance / fuel_efficiency
-    journey_cost = fuel_needed * fuel_price_per_liter
-    return journey_cost
-
-def driving_price(distance_km, car_type, fuel_type):
-
-    # Set fuel efficiency based on car type and fuel type
-    fuel_efficiencies = {
-        'small': {'gasoline': 36, 'diesel': 43, 'electric': 132},
-        'medium': {'gasoline': 36, 'diesel': 43, 'electric': 132},
-        'large': {'gasoline': 36, 'diesel': 43, 'electric': 132}
-    }
-
-    # prices are per litre or per kWh
-    fuel_prices = {
-        'gasoline': 1.24,
-        'diesel': 1.3,
-        'electric': 0.163
-    }
-
-    # based on average yearly insurance prices estimates in the uk (divided by 365)
-    insurances = {
-        'small': {'gasoline': 2.05, 'diesel': 2.60, 'electric': 2.20},
-        'medium': {'gasoline': 0.56, 'diesel': 2.74, 'electric': 0.60},
-        'large': {'gasoline': 2.88, 'diesel': 1.28, 'electric': 3.10}
-    }
-
-    if car_type in fuel_efficiencies and fuel_type in fuel_efficiencies[car_type]:
-        fuel_efficiency = fuel_efficiencies[car_type][fuel_type]
-    else:
-        return "Invalid car type or fuel type. Using provided fuel efficiency."
-
-    journey_cost = calculate_journey_cost(distance_km, fuel_efficiency, fuel_prices[fuel_type]) + insurances[car_type][fuel_type]
-    return journey_cost
-
 def handler(event, context):
     print('request: {}'.format(json.dumps(event)))
 
@@ -119,23 +83,17 @@ def handler(event, context):
 
              # Set fuel efficiency based on car type and fuel type
             fuel_efficiencies = {
-                'small': {'gasoline': 36, 'diesel': 43, 'electric': 132},
-                'medium': {'gasoline': 36, 'diesel': 43, 'electric': 132},
-                'large': {'gasoline': 36, 'diesel': 43, 'electric': 132}
+                'small': {'gasoline': 36, 'diesel': 43, 'electricity': 132},
+                'normal': {'gasoline': 40, 'diesel': 47, 'electricity': 136},
+                'large': {'gasoline': 44, 'diesel': 51, 'electricity': 140}
             }
 
-            # prices are per litre or per kWh
-            fuel_prices = {
-                'gasoline': 1.24,
-                'diesel': 1.3,
-                'electric': 0.163
-            }
 
             # based on average yearly insurance prices estimates in the uk (divided by 365)
             insurances = {
-                'small': {'gasoline': 2.05, 'diesel': 2.60, 'electric': 2.20},
-                'medium': {'gasoline': 0.56, 'diesel': 2.74, 'electric': 0.60},
-                'large': {'gasoline': 2.88, 'diesel': 1.28, 'electric': 3.10}
+                'small': {'gasoline': 2.05, 'diesel': 2.60, 'electricity': 2.20},
+                'normal': {'gasoline': 0.56, 'diesel': 2.74, 'electricity': 0.60},
+                'large': {'gasoline': 2.88, 'diesel': 1.28, 'electricity': 3.10}
             }
 
             if carSize in fuel_efficiencies and fuelType in fuel_efficiencies[carSize]:
@@ -143,11 +101,7 @@ def handler(event, context):
             else:
                 return "Invalid car type or fuel type. Using provided fuel efficiency."
 
-            fuel_needed = driving_distance / fuel_efficiency
-            driving_price = fuel_needed * fuel_prices[fuelType]
-            driving_price += insurances[carSize][fuelType]
-
-            msg = f'By using public transport instead of driving, you saved {difference} kgs of co2 on your {driving_distance}km trip, User! Driving would have cost you £{round(driving_price,2)}!'
+            msg = ''
             
             # fetch fuel prices from sainsbury's api
             try:
@@ -182,10 +136,8 @@ def handler(event, context):
             # geocode the destination postcode
             closest_station = None
             min_distance = 99999
-            count = 0
             R = 6371.0  # earth radius in kilometers
             for station in sainos_response.json().get('stations'):
-                print(f"Checking station: {station['address']}, {station['postcode']}")
                 lat2, lon2 = station['location']['latitude'], station['location']['longitude']
                 lon1, lat1, lon2, lat2 = map(np.radians, [start_lon, start_lat, lon2, lat2])
                 dlon = lon2 - lon1
@@ -196,15 +148,24 @@ def handler(event, context):
                 if distance < min_distance:
                     closest_station = station
                     min_distance = distance
-                    print(f"New closest station: {closest_station['address']}, {closest_station['postcode']}")
-                else:
-                    print(f"{station['address']}, {station['postcode']} is further away, current min_distance: {min_distance} km, distance: {distance} km")
-                count += 1
-                # 315 stations in the UK
+
+                # 315 stations in the UK!
+
+            # prices are per litre or per kWh
+            fuel_prices = {
+                'gasoline': closest_station['prices']['E10'] / 100,
+                'diesel': closest_station['prices']['B7'] / 100,
+                'electricity': 0.163
+            }
+
+            fuel_needed = driving_distance / fuel_efficiency
+            driving_price = fuel_needed * fuel_prices[fuelType]
+            driving_price += insurances[carSize][fuelType]
 
 
+            msg += f'By using public transport instead of driving, you saved {difference} kgs of co2 on your {driving_distance}km trip, User! Driving would have cost you £{round(driving_price,2)}!'
 
-            msg += f"shortest distance between {startingPoint} and a sainsbury's petrol station is {min_distance} km to address: {closest_station['address']}, {closest_station['postcode']}! count: {count}"
+            msg += f"shortest distance between {startingPoint} and a sainsbury's petrol station is {min_distance} km to address: {closest_station['address']}, {closest_station['postcode']}!"
 
             return {
                     'statusCode': 200,
