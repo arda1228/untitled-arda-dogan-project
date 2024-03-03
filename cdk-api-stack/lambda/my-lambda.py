@@ -10,6 +10,8 @@ def handler(event, context):
     fuelType = json.loads(event['body'])['fuelType']
     startingPoint = json.loads(event['body'])['startingPoint']
     destination = json.loads(event['body'])['destination']
+    yearlyInsurance = float(json.loads(event['body'])['yearlyInsurance'])
+    fuelEfficiency = float(json.loads(event['body'])['fuelEfficiency'])
 
     co2_t_url = os.environ['CO2_T_URL']
     co2_st_api_key = os.environ['CO2_ST_API_KEY']
@@ -96,7 +98,9 @@ def handler(event, context):
                 'large': {'gasoline': 2.88, 'diesel': 1.28, 'electricity': 3.10}
             }
 
-            if carSize in fuel_efficiencies and fuelType in fuel_efficiencies[carSize]:
+            if fuelEfficiency:
+                fuel_efficiency = fuelEfficiency
+            elif (carSize in fuel_efficiencies and fuelType in fuel_efficiencies[carSize]):
                 fuel_efficiency = fuel_efficiencies[carSize][fuelType]
             else:
                 return "Invalid car type or fuel type. Using provided fuel efficiency."
@@ -107,7 +111,7 @@ def handler(event, context):
             try:
                 sainos_response = requests.get('https://api.sainsburys.co.uk/v1/exports/latest/fuel_prices_data.json', verify=False)
                 if sainos_response.status_code == 200:
-                    msg += sainos_response.json().get('last_updated')
+                    print(sainos_response.json().get('last_updated'))
                 else:
                     msg += f"Failed to fetch stations data. Status code: {sainos_response.status_code}"
             except Exception as e:
@@ -124,7 +128,7 @@ def handler(event, context):
                     if 'candidates' in data and data['candidates']:
                         location = data['candidates'][0]['location']
                         start_lat, start_lon = location['y'], location['x']
-                        msg += f"Coordinates for {startingPoint}: {start_lat}, {start_lon}"
+                        print(f"Coordinates for {startingPoint}: {start_lat}, {start_lon}")
                     else:
                         start_lon, start_lat = None
                         msg += f"Could not find coordinates for postcode {startingPoint}"
@@ -160,12 +164,16 @@ def handler(event, context):
 
             fuel_needed = driving_distance / fuel_efficiency
             driving_price = fuel_needed * fuel_prices[fuelType]
-            driving_price += insurances[carSize][fuelType]
+
+            if yearlyInsurance:
+                driving_price += yearlyInsurance / 365
+            else:
+                driving_price += insurances[carSize][fuelType]
 
 
-            msg += f'By using public transport instead of driving, you saved {difference} kgs of co2 on your {driving_distance}km trip, User! Driving would have cost you £{round(driving_price,2)}!'
+            msg += f'By using public transport instead of driving, you saved {difference} kgs of co2-equivalent emissions on your {driving_distance}km trip, User! \nDriving would have cost you £{round(driving_price,2)}!\nPublic Transport would have cost an estimated £{0.5 * round(driving_distance,2)}'
 
-            msg += f"shortest distance between {startingPoint} and a sainsbury's petrol station is {min_distance} km to address: {closest_station['address']}, {closest_station['postcode']}!"
+            # msg += f"shortest distance between {startingPoint} and a sainsbury's petrol station is {min_distance} km to address: {closest_station['address']}, {closest_station['postcode']}!"
 
             return {
                     'statusCode': 200,
