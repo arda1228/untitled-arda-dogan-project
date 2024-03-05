@@ -10,8 +10,8 @@ def handler(event, context):
     fuelType = json.loads(event['body'])['fuelType']
     startingPoint = json.loads(event['body'])['startingPoint']
     destination = json.loads(event['body'])['destination']
-    yearlyInsurance = float(json.loads(event['body'])['yearlyInsurance'])
-    fuelEfficiency = float(json.loads(event['body'])['fuelEfficiency'])
+    yearlyInsurance = json.loads(event['body'])['yearlyInsurance']
+    fuelEfficiency = json.loads(event['body'])['fuelEfficiency']
 
     co2_t_url = os.environ['CO2_T_URL']
     co2_st_api_key = os.environ['CO2_ST_API_KEY']
@@ -85,21 +85,25 @@ def handler(event, context):
 
              # Set fuel efficiency based on car type and fuel type
             fuel_efficiencies = {
-                'small': {'gasoline': 36, 'diesel': 43, 'electricity': 132},
-                'normal': {'gasoline': 40, 'diesel': 47, 'electricity': 136},
-                'large': {'gasoline': 44, 'diesel': 51, 'electricity': 140}
+                'small': {'gasoline': 36 * 1.175, 'diesel': 47 * 1.175, 'electricity': 136 * 1.175},
+                'normal': {'gasoline': 36, 'diesel': 43, 'electricity': 132},
+                'large': {'gasoline': 32 * 0.8, 'diesel': 39 * 0.8, 'electricity': 128 * 0.8}
             }
 
 
             # based on average yearly insurance prices estimates in the uk (divided by 365)
+            average_insurance_normal = float(561/365)
+            average_insurance_small = average_insurance_normal * 0.875
+            average_insurance_large = average_insurance_normal * 1.175
+
             insurances = {
-                'small': {'gasoline': 2.05, 'diesel': 2.60, 'electricity': 2.20},
-                'normal': {'gasoline': 0.56, 'diesel': 2.74, 'electricity': 0.60},
-                'large': {'gasoline': 2.88, 'diesel': 1.28, 'electricity': 3.10}
+                'small': {'gasoline': average_insurance_small, 'diesel': average_insurance_small * 1.1, 'electricity': average_insurance_small * 1.175},
+                'normal': {'gasoline': average_insurance_normal, 'diesel': average_insurance_normal * 1.1, 'electricity': average_insurance_normal * 1.175},
+                'large': {'gasoline': average_insurance_large, 'diesel': average_insurance_large * 1.1, 'electricity': average_insurance_large * 1.175}
             }
 
-            if fuelEfficiency:
-                fuel_efficiency = fuelEfficiency
+            if fuelEfficiency != '':
+                fuel_efficiency = float(fuelEfficiency)
             elif (carSize in fuel_efficiencies and fuelType in fuel_efficiencies[carSize]):
                 fuel_efficiency = fuel_efficiencies[carSize][fuelType]
             else:
@@ -165,13 +169,16 @@ def handler(event, context):
             fuel_needed = driving_distance / fuel_efficiency
             driving_price = fuel_needed * fuel_prices[fuelType]
 
-            if yearlyInsurance:
-                driving_price += yearlyInsurance / 365
+            if yearlyInsurance != '':
+                driving_price += float(yearlyInsurance) / 365
             else:
                 driving_price += insurances[carSize][fuelType]
 
+            pt_price = 0.175 * driving_distance
 
-            msg += f'By using public transport instead of driving, you saved {difference} kgs of co2-equivalent emissions on your {driving_distance}km trip, User! \nDriving would have cost you £{round(driving_price,2)}!\nPublic Transport would have cost an estimated £{0.5 * round(driving_distance,2)}'
+            price_difference = driving_price - pt_price
+
+            msg += f'By using public transport instead of driving, you saved {difference} kgs of co2-equivalent emissions on your {driving_distance}km trip, User! \nDriving would have cost you £{round(driving_price,2)}!\nPublic Transport would have cost an estimated £{pt_price}, meaning you saved £{round(price_difference,2)}!'
 
             # msg += f"shortest distance between {startingPoint} and a sainsbury's petrol station is {min_distance} km to address: {closest_station['address']}, {closest_station['postcode']}!"
 
